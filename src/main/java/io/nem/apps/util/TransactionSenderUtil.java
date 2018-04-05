@@ -42,7 +42,7 @@ public class TransactionSenderUtil {
 	 * @param transaction
 	 *            the transaction
 	 */
-	public static void sendTransaction(Transaction transaction) {
+	public static NemAnnounceResult sendTransaction(Transaction transaction) {
 
 		final byte[] data = BinarySerializer.serializeToBytes(transaction.asNonVerifiable());
 
@@ -50,23 +50,11 @@ public class TransactionSenderUtil {
 		final CompletableFuture<Deserializer> future = TransactionApi.announceTransaction(NemAppsLibGlobals.getNodeEndpoint(),
 				request);
 		try {
-			future.thenAcceptAsync(d -> {
-				final NemAnnounceResult result = new NemAnnounceResult(d);
-
-				switch (result.getCode()) {
-				case 1:
-					LOGGER.info(String.format("successfully send xem " + result.getMessage()));
-					break;
-				default:
-					LOGGER.warning(String.format("could not send xem " + result.getMessage()));
-				}
-			}).exceptionally(e -> {
-				e.printStackTrace();
-				LOGGER.warning(String.format("could not send xem:" + e.getMessage()));
-				return null;
-			}).get();
+			Deserializer d = future.get();
+			return new NemAnnounceResult(d);
 		} catch (Exception e) {
 			LOGGER.warning("Error Occured: " + e.getMessage());
+			return null;
 			// e.printStackTrace();
 		}
 	}
